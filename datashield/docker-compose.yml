@@ -1,0 +1,37 @@
+services:
+  opal:
+    image: obiba/opal:5.0
+    ports:
+      - "8880:8080"
+      - "8843:8443"
+    links:
+      - rock
+      - mongodb
+    environment:
+      - JAVA_OPTS=-Xms1G -Xmx8G -XX:+UseG1GC
+      - OPAL_ADMINISTRATOR_PASSWORD=password
+      - OPAL_DEMO_USER_NAME=demo_user
+      - OPAL_DEMO_USER_PASSWORD=Demo_password1!
+      - OPAL_DEMO_PROJECT=DEMO
+      - OPAL_DEMO_TABLE=CNSIM1
+      - OPAL_DEMO_SOURCE_DATA_URL=https://raw.githubusercontent.com/OllyButters/ds_data/main/CNSIM/CNSIM1.csv
+      - OPAL_COHORT_PROJECT=COHORT
+      - OPAL_COHORT_TABLE=conditions1
+      - OPAL_COHORT_SOURCE_DATA_URL=https://raw.githubusercontent.com/OllyButters/ds_data/main/synthea/conditionsa.csv
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGODATA_DATABASE=mongodb
+      - ROCK_HOSTS=rock:8085
+      #- CSRF_ALLOWED=datashield2.liv.ac.uk:*
+      - CSRF_ALLOWED=172.24.128.135:*
+    volumes:
+      - /datashield/1/opal:/srv
+      - ./customise.sh:/customise.sh
+    depends_on: 
+      - mongodb
+    post_start:
+      - command: bash -c "/customise.sh"
+  mongodb:
+    image: mongo:6.0
+  rock:
+    image: datashield/rock-base:latest
