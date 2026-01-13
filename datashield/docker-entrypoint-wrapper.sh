@@ -2,6 +2,7 @@
 set -e
 
 # Start Opal using the original entrypoint
+# defined in the opal docker repo source image
 /bin/bash /docker-entrypoint.sh "$@" &
 
 OPAL_PID=$!
