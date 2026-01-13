@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Starting Opal..."
-/entrypoint.sh &
+echo "Starting Opal (supervisord)..."
 
-echo "Waiting for Opal..."
-until opal system --user administrator --password "$OPAL_ADMINISTRATOR_PASSWORD" --version >/dev/null 2>&1
-do
+/usr/bin/supervisord -c /etc/supervisor/supervisord.conf &
+
+OPAL_PID=$!
+
+echo "Waiting for Opal to become available..."
+
+until curl -sf http://localhost:8080/ws/system/status > /dev/null; do
+  echo "Opal not ready yet, sleeping..."
   sleep 10
 done
 
-echo "Running customisation..."
-/customise.sh
+echo "Opal is up."
 
-wait
-echo "Exiting docker-entrypoint.sh"
+# Run customisation only once
+if [ ! -f /srv/.opal_initialised ]; then
+  echo "Running Opal customisation..."
+  /bin/bash /customise.sh
+else
+  echo "Opal already initialised, skipping customisation."
+fi
+
+# Bring Opal process to foreground
+wait $OPAL_PID
+
