@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-set -e
 
 # Start Opal using the original entrypoint
 # defined in the opal docker repo source image
+# set +e to avoid exiting on first error
+set +e
 /bin/bash /docker-entrypoint.sh "$@" &
+
+# re-enable exit on error
+set -e
 
 OPAL_PID=$!
 
