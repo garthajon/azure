@@ -4,7 +4,10 @@
 # defined in the opal docker repo source image
 # set +e to avoid exiting on first error
 set +e
-/bin/bash /docker-entrypoint.sh "$@" &
+#/bin/bash /docker-entrypoint.sh "$@" &
+
+# Start Opal normally
+/bin/bash /docker-entrypoint.sh app &
 
 # re-enable exit on error
 set -e
