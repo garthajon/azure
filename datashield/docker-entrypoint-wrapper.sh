@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 # Start Opal using the original entrypoint
 # defined in the opal docker repo source image
 # set +e to avoid exiting on first error
