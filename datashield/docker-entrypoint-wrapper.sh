@@ -27,8 +27,16 @@ echo "finish check opal up"
 # Run customisation once
 echo "start customise.sh config"
 if [ ! -f /srv/.opal_initialised ]; then
-  /bin/bash /customise.sh
+  CWD="$(pwd)"
+
+  if [ -x "$CWD/customise.sh" ] || [ -f "$CWD/customise.sh" ]; then
+    /bin/bash "$CWD/customise.sh"
+  else
+    echo "ERROR: customise.sh not found in $CWD" >&2
+    exit 1
+  fi
 fi
+
 echo "finish customise.sh config"
 # Keep container alive
 wait $OPAL_PID
