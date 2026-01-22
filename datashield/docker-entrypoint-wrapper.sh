@@ -10,9 +10,6 @@ set +e
 # Start Opal normally
 /bin/bash /docker-entrypoint.sh app &
 
-# re-enable exit on error
-set -e
-
 echo "finished docker-entrypoint.sh file config"
 
 OPAL_PID=$!
@@ -36,6 +33,11 @@ if [ ! -f /mnt/.opal_initialised ]; then
     exit 1
   fi
 fi
+
+
+# re-enable exit on error
+set -e
+
 
 echo "finish customise.sh config"
 # Keep container alive
