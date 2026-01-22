@@ -9,7 +9,7 @@
 #checks to see if opal has already been initialised
 # If it has then skip the customisation and exit
 # this stops the customisation being run every time the container is restarted
-if [ -f /srv/.opal_initialised ]; then
+if [ -f /mnt/.opal_initialised ]; then
   echo "Opal already initialised skipping customisation"
   exit 0
 fi
