@@ -26,7 +26,7 @@ done
 echo "finish check opal up"
 # Run customisation once
 echo "start customise.sh config"
-if [ ! -f /srv/.opal_initialised ]; then
+if [ ! -f /mnt/.opal_initialised ]; then
   CWD="$(pwd)"
 
   if [ -x "$CWD/customise.sh" ] || [ -f "$CWD/customise.sh" ]; then
