@@ -104,4 +104,4 @@ opal perm-table --user administrator --password password --type USER --project $
 touch /finished_local_customisation.txt
 
 # Create a file to indicate that opal has been initialised
-touch /srv/.opal_initialised
+touch /mnt/.opal_initialised
