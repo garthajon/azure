@@ -21,33 +21,53 @@ echo "start check opal up"
 #  echo "still stuck in a loop waiting for OPAL to start"
 # done
 
+#!/bin/sh
+
+# List of ports to try
 PORTS="8080 8443 8081"
-ENDPOINT="/ws/system/status"
+
+# List of endpoints to try
+ENDPOINTS="/ws/system/status /status /healthcheck /"
 
 echo "Waiting for OPAL to become reachable..."
 
 while :; do
+  SUCCESS=0
+
   for PORT in $PORTS; do
-    URL="http://localhost:${PORT}${ENDPOINT}"
+    for ENDPOINT in $ENDPOINTS; do
+      URL="http://localhost:${PORT}${ENDPOINT}"
+      echo "Probing ${URL} ..."
 
-    echo "Probing ${URL} ..."
+      # Send request; capture body and exit code
+      RESPONSE=$(curl -s -o /tmp/opal_response.json -w "%{http_code}" "$URL")
+      RC=$?
 
-    RESPONSE=$(curl -sf "${URL}")
-    RC=$?
-
-    if [ "$RC" -eq 0 ]; then
-      echo "SUCCESS: OPAL responded on ${URL}"
-      echo "Response:"
-      echo "${RESPONSE}"
-      exit 0
-    else
-      echo "FAILED: No response from ${URL} (curl exit code ${RC})"
-    fi
+      if [ "$RC" -eq 0 ]; then
+        echo "SUCCESS: OPAL responded on ${URL}"
+        echo "HTTP status code: ${RESPONSE}"
+        echo "Response body (first 10 lines):"
+        head -n 10 /tmp/opal_response.json
+        SUCCESS=1
+        break 2  # Exit both loops on first successful endpoint
+      else
+        echo "FAILED: No response from ${URL} (curl exit code ${RC})"
+      fi
+    done
   done
 
-  echo "OPAL not reachable yet on any known port. Sleeping 10s..."
+  if [ $SUCCESS -eq 1 ]; then
+    echo "OPAL is reachable. Proceeding..."
+    break
+  fi
+
+  echo "OPAL not reachable yet on any known port/endpoint. Sleeping 10s..."
   sleep 10
 done
+
+# At this point, OPAL is reachable, safe to run configuration scripts
+# bash /path/to/custom.sh
+
 
 echo "finish check opal up"
 # Run customisation once
