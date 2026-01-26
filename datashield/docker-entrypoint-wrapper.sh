@@ -16,7 +16,36 @@ OPAL_PID=$!
 
 echo "start check opal up"
 # Wait for Opal
-until curl -sf http://localhost:8080/ws/system/status > /dev/null; do
+#until curl -sf http://localhost:8080/ws/system/status >/dev/null; do
+#  sleep 10
+#  echo "still stuck in a loop waiting for OPAL to start"
+# done
+
+PORTS="8080 8443 8081"
+ENDPOINT="/ws/system/status"
+
+echo "Waiting for OPAL to become reachable..."
+
+while :; do
+  for PORT in $PORTS; do
+    URL="http://localhost:${PORT}${ENDPOINT}"
+
+    echo "Probing ${URL} ..."
+
+    RESPONSE=$(curl -sf "${URL}")
+    RC=$?
+
+    if [ "$RC" -eq 0 ]; then
+      echo "SUCCESS: OPAL responded on ${URL}"
+      echo "Response:"
+      echo "${RESPONSE}"
+      exit 0
+    else
+      echo "FAILED: No response from ${URL} (curl exit code ${RC})"
+    fi
+  done
+
+  echo "OPAL not reachable yet on any known port. Sleeping 10s..."
   sleep 10
 done
 
