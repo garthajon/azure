@@ -6,6 +6,8 @@ echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 echo "start docker-entrypoint.sh file up"
 set +e
 #/bin/bash /docker-entrypoint.sh "$@" &
+COPY customise.sh /srv/customise.sh
+RUN chmod +x /srv/customise.sh
 
 # Start Opal normally
 /bin/bash /docker-entrypoint.sh app &
