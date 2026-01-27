@@ -72,7 +72,7 @@ done
 echo "finish check opal up"
 # Run customisation once
 echo "start customise.sh config"
-cd /mnt
+#cd /mnt
 if [ ! -f /mnt/.opal_initialised ]; then
   CWD="$(pwd)"
 
