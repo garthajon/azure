@@ -5,6 +5,13 @@ echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 # set +e to avoid exiting on first error
 echo "start docker-entrypoint.sh file up"
 set +e
+
+# review current working directory contents
+echo "PWD: $(pwd)"
+echo "User: $(whoami)"
+echo "current WORKDIR contents:"
+ls -la
+
 #/bin/bash /docker-entrypoint.sh "$@" &
 echo "start customise.sh to srv folder"
 COPY customise.sh /srv/customise.sh
@@ -77,10 +84,20 @@ echo "finish check opal up"
 # Run customisation once
 echo "start copying customise.sh file"
 #cd /mnt
-RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /customise.sh
+# we copy the customise.sh file from our repo to an absolute path /srv/customise.sh
+# which should ensure that the file is definitely copied to the /srv folder in the container
+RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /srv/customise.sh
+RUN chmod +x /srv/customise.sh
 # Make executable
-RUN chmod +x /customise.
+#RUN chmod +x /customise.
 echo "finished copying file start customise.sh config"
+
+# review current working directory contents
+echo "PWD: $(pwd)"
+echo "User: $(whoami)"
+echo "current WORKDIR contents:"
+ls -la
+
 if [ ! -f /mnt/.opal_initialised ]; then
   CWD="$(pwd)"
 
@@ -88,7 +105,10 @@ if [ ! -f /mnt/.opal_initialised ]; then
     /bin/bash "$CWD/customise.sh"
   else
     echo "ERROR: customise.sh not found in $CWD" >&2
-    exit 1
+    # when customise.sh is missing we should not exit with error
+    # as this would try to restart the container endlessly
+    # and the start up winds up in an infinite loop
+    exit 0
   fi
 fi
 
