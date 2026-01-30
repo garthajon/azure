@@ -75,8 +75,12 @@ done
 
 echo "finish check opal up"
 # Run customisation once
-echo "start customise.sh config"
+echo "start copying customise.sh file"
 #cd /mnt
+RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /customise.sh
+# Make executable
+RUN chmod +x /customise.
+echo "finished copying file start customise.sh config"
 if [ ! -f /mnt/.opal_initialised ]; then
   CWD="$(pwd)"
 
