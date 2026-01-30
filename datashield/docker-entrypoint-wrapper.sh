@@ -85,15 +85,15 @@ done
 
 echo "finish check opal up"
 # Run customisation once
-echo "start copying customise.sh file"
+#echo "start copying customise.sh file"
 #cd /mnt
 # we copy the customise.sh file from our repo to an absolute path /srv/customise.sh
 # which should ensure that the file is definitely copied to the /srv folder in the container
-RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /srv/customise.sh
-RUN chmod +x /srv/customise.sh
+#'RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /srv/customise.sh
+#RUN chmod +x /srv/customise.sh
 # Make executable
 #RUN chmod +x /customise.
-echo "finished copying file start customise.sh config"
+#echo "finished copying file start customise.sh config"
 
 # review current working directory contents
 echo "PWD: $(pwd)"
