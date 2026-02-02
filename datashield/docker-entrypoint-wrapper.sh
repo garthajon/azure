@@ -14,11 +14,15 @@ ls -la
 
 #/bin/bash /docker-entrypoint.sh "$@" &
 echo "start customise.sh to srv folder"
-# nnote putting a forward slash before customise.sh
+# note putting a forward slash before customise.sh
 # explicitly means we are copying from the root directory of the build context
 # to the /srv folder in the container
-COPY /customise.sh /srv/customise.sh
-RUN chmod +x /srv/customise.sh
+# Copy the script inside the container filesystem
+# replace invalid docker buildcontext runtime copy commands with
+# valid shell commands
+cp /customise.sh /srv/customise.sh
+# Make it executable
+chmod +x /srv/customise.sh
 echo "finish customise.sh to srv folder"
 
 # Start Opal normally
