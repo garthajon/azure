@@ -107,9 +107,9 @@ ls -la
 
 if [ ! -f /mnt/.opal_initialised ]; then
   CWD="$(pwd)"
-
-  if [ -x "$CWD/customise.sh" ] || [ -f "$CWD/customise.sh" ]; then
-    /bin/bash "$CWD/customise.sh"
+# add initial forward slash to ensure abolute reference for executing the customise.sh file
+  if [ -x "/$CWD/customise.sh" ] || [ -f "/$CWD/customise.sh" ]; then
+    /bin/bash "/$CWD/customise.sh"
   else
     echo "ERROR: customise.sh not found in $CWD" >&2
     # when customise.sh is missing we should not exit with error
