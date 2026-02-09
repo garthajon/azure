@@ -105,6 +105,10 @@ echo "User: $(whoami)"
 echo "current WORKDIR contents:"
 ls -la
 
+ls -la /mnt || echo "/mnt missing"
+ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
+
+
 if [ ! -f /mnt/.opal_initialised ]; then
   echo "CWD in customise.sh run attempt"
   /bin/bash "/srv/customise.sh"
