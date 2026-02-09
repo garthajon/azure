@@ -106,13 +106,15 @@ echo "current WORKDIR contents:"
 ls -la
 
 if [ ! -f /mnt/.opal_initialised ]; then
-/bin/bash "/srv/customise.sh"
+  echo "CWD in customise.sh run attempt"
+  /bin/bash "/srv/customise.sh"
 fi
 
 #if [ ! -f /mnt/.opal_initialised ]; then
 #  CWD="$(pwd)"
 ## add initial forward slash to ensure abolute reference for executing the customise.sh file
 #  if [ -x "/$CWD/customise.sh" ] || [ -f "/$CWD/customise.sh" ]; then
+#    echo "CWD in customise.sh run attempt: $CWD"
 #    /bin/bash "/$CWD/customise.sh"
 #  else
 #    echo "ERROR: customise.sh not found in $CWD" >&2
