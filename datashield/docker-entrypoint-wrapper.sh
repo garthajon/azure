@@ -106,18 +106,22 @@ echo "current WORKDIR contents:"
 ls -la
 
 if [ ! -f /mnt/.opal_initialised ]; then
-  CWD="$(pwd)"
-# add initial forward slash to ensure abolute reference for executing the customise.sh file
-  if [ -x "/$CWD/customise.sh" ] || [ -f "/$CWD/customise.sh" ]; then
-    /bin/bash "/$CWD/customise.sh"
-  else
-    echo "ERROR: customise.sh not found in $CWD" >&2
-    # when customise.sh is missing we should not exit with error
-    # as this would try to restart the container endlessly
-    # and the start up winds up in an infinite loop
-    exit 0
-  fi
+/bin/bash "/srv/customise.sh"
 fi
+
+#if [ ! -f /mnt/.opal_initialised ]; then
+#  CWD="$(pwd)"
+## add initial forward slash to ensure abolute reference for executing the customise.sh file
+#  if [ -x "/$CWD/customise.sh" ] || [ -f "/$CWD/customise.sh" ]; then
+#    /bin/bash "/$CWD/customise.sh"
+#  else
+#    echo "ERROR: customise.sh not found in $CWD" >&2
+#    # when customise.sh is missing we should not exit with error
+#    # as this would try to restart the container endlessly
+#    # and the start up winds up in an infinite loop
+#    exit 0
+#  fi
+#fi
 
 
 # re-enable exit on error
