@@ -6,6 +6,8 @@ echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 echo "start docker-entrypoint.sh file up"
 set +e
 
+which bash || echo "no bash"
+
 # review current working directory contents
 echo "PWD: $(pwd)"
 echo "User: $(whoami)"
