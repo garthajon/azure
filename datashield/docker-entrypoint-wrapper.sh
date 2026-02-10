@@ -6,6 +6,7 @@ echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 echo "start docker-entrypoint.sh file up"
 set +e
 
+# check and print the bash version
 which bash || echo "no bash"
 
 # review current working directory contents
@@ -28,7 +29,7 @@ chmod +x /srv/customise.sh
 echo "finish customise.sh to srv folder"
 
 # Start Opal normally
-/bin/bash /docker-entrypoint.sh app &
+/usr/bin/bash /docker-entrypoint.sh app &
 
 echo "finished docker-entrypoint.sh file config"
 
@@ -111,9 +112,11 @@ ls -la /mnt || echo "/mnt missing"
 ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
 
 
-if [ ! -f /mnt/.opal_initialised ]; then
+#if [ ! -f /mnt/.opal_initialised ]; then
+
+if [ ! -f "/mnt/.opal_initialised" ]; then
   echo "CWD in customise.sh run attempt"
-  /bin/bash "/srv/customise.sh"
+  /usr/bin/bash "/srv/customise.sh"
 fi
 
 #if [ ! -f /mnt/.opal_initialised ]; then
