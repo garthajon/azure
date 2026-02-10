@@ -33,7 +33,7 @@ echo "finish customise.sh to srv folder"
 
 echo "finished docker-entrypoint.sh file config"
 
-OPAL_PID=$!
+
 
 echo "start check opal up"
 # Wait for Opal
@@ -86,6 +86,10 @@ while :; do
   sleep 10
 done
 
+# $! contains the PID of the last background process, which is the OPAL server we started earlier
+# so we assign the process id for opal to a variable
+OPAL_PID=$!
+
 # At this point, OPAL is reachable, safe to run configuration scripts
 # bash /path/to/custom.sh
 
@@ -119,6 +123,25 @@ if [ ! -f "/mnt/.opal_initialised" ]; then
   /usr/bin/bash "/srv/customise.sh"
 fi
 
+
+# the -e flag checks whether the file exists at all
+# it does not check whether the file is a regular file or not
+if [ -e /mnt/.opal_initialised ]; then
+    echo "File exists, e flag file check"
+    /usr/bin/bash "/srv/customise.sh"
+else
+    echo "File does not exist e flag file check"
+fi
+
+
+if ls -l /mnt/.opal_initialised >/dev/null 2>&1; then
+    echo "File exists - ls file check"
+    /usr/bin/bash "/srv/customise.sh"
+else
+    echo "File does not exist - ls file check"
+fi
+
+
 #if [ ! -f /mnt/.opal_initialised ]; then
 #  CWD="$(pwd)"
 ## add initial forward slash to ensure abolute reference for executing the customise.sh file
@@ -142,3 +165,7 @@ set -e
 echo "finish customise.sh config"
 # Keep container alive
 wait $OPAL_PID
+# make opal the foreground process to keep the container alive
+# opal becomes PID 1
+exec opal
+
