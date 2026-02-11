@@ -118,6 +118,20 @@ ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
 
 #if [ ! -f /mnt/.opal_initialised ]; then
 
+# until the opal container can talk to the mongo container we should not try to run the customise.sh script
+
+MONGO_HOST="mongodb"
+MONGO_PORT="27017"
+
+echo "Checking MongoDB availability..."
+
+until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
+  echo "MongoDB not available yet — retrying..."
+  sleep 2
+done
+
+echo "MongoDB is reachable."
+
 if [ ! -f "/mnt/.opal_initialised" ]; then
   echo "CWD in customise.sh run attempt"
   /usr/bin/bash "/srv/customise.sh"
@@ -126,20 +140,27 @@ fi
 
 # the -e flag checks whether the file exists at all
 # it does not check whether the file is a regular file or not
-if [ -e /mnt/.opal_initialised ]; then
-    echo "File exists, e flag file check"
-    /usr/bin/bash "/srv/customise.sh"
-else
-    echo "File does not exist e flag file check"
-fi
+#if [ -e /mnt/.opal_initialised ]; then
+#    echo "File exists, e flag file check"
+#    /usr/bin/bash "/srv/customise.sh"
+#else
+#    echo "File does not exist e flag file check"
+#fi
 
 
-if ls -l /mnt/.opal_initialised >/dev/null 2>&1; then
-    echo "File exists - ls file check"
-    /usr/bin/bash "/srv/customise.sh"
-else
-    echo "File does not exist - ls file check"
-fi
+#if ls -l /mnt/.opal_initialised >/dev/null 2>&1; then
+#    echo "File exists - ls file check"
+#    /usr/bin/bash "/srv/customise.sh"
+#else
+#    echo "File does not exist - ls file check"
+#fi
+
+
+
+echo "PWD: $(pwd)"
+echo "User: $(whoami)"
+echo "current WORKDIR contents:"
+ls -la
 
 
 #if [ ! -f /mnt/.opal_initialised ]; then
