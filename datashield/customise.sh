@@ -9,7 +9,8 @@
 #checks to see if opal has already been initialised
 # If it has then skip the customisation and exit
 # this stops the customisation being run every time the container is restarted
-if [ -f /mnt/.opal_initialised ]; then
+# file check flag e checks whether the file exists at all, but does not check whether the file is a regular file or not
+if [ -e /mnt/.opal_initialised ]; then
   echo "Opal already initialised skipping customisation"
   exit 0
 fi
