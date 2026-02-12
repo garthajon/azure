@@ -125,7 +125,12 @@ MONGO_PORT="27017"
 
 echo "Checking MongoDB availability..."
 
-until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
+#until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
+#  echo "MongoDB not available yet — retrying..."
+#  sleep 2
+#done
+
+until echo > /dev/tcp/$MONGO_HOST/$MONGO_PORT; do
   echo "MongoDB not available yet — retrying..."
   sleep 2
 done
