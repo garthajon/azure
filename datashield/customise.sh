@@ -63,8 +63,14 @@ wget $OPAL_DEMO_SOURCE_DATA_URL
 opal_fs_path="/home/administrator"
 opal_file_path="$opal_fs_path/`basename $OPAL_DEMO_SOURCE_DATA_URL`"
 
+#uploads csv file into opal
 opal file --user administrator --password $OPAL_ADMINISTRATOR_PASSWORD -up `basename $OPAL_DEMO_SOURCE_DATA_URL` $opal_fs_path
 
+#create datasource in opal with the same name as the project, and specifies that the datasource is a mongodb datasource
+opal create-datasource --user administrator --password $OPAL_ADMINISTRATOR_PASSWORD --name $OPAL_DEMO_PROJECT --type mongodb
+
+#reads file from upload into datasource called "DEMO" i.e in this case the same name as the project defined by $OPAL_DEMO_PROJECT, with the table name defined by $OPAL_DEMO_TABLE, and specifies that the file is comma separated and that the value type for all variables is decimal
+# note that the datasource name need not be the same as the project name, but in this case we are keeping it the same for simplicity
 opal import-csv --user administrator --password $OPAL_ADMINISTRATOR_PASSWORD --destination $OPAL_DEMO_PROJECT --path $opal_file_path  --tables $OPAL_DEMO_TABLE --separator , --type Participant --valueType decimal
 
 cd ..
