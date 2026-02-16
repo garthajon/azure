@@ -120,6 +120,11 @@ ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
 
 # until the opal container can talk to the mongo container we should not try to run the customise.sh script
 
+# nc is not installed in the base docker image so add it here
+
+apt-get update && apt-get install -y netcat-openbsd
+
+
 MONGO_HOST="mongodb"
 MONGO_PORT="27017"
 
@@ -130,7 +135,7 @@ echo "Checking MongoDB availability..."
 #  sleep 2
 #done
 
-until echo > /dev/tcp/$MONGO_HOST/$MONGO_PORT; do
+until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
   echo "MongoDB not available yet — retrying..."
   sleep 2
 done
