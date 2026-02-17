@@ -124,29 +124,29 @@ ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
 
 #apt-get update && apt-get install -y netcat-openbsd
 
-apt-get update
-apt-get install -y mongodb-mongosh
+#apt-get update
+#apt-get install -y mongodb-mongosh
 
 
-MONGO_HOST="mongodb"
-MONGO_PORT="27017"
+#MONGO_HOST="mongodb"
+#MONGO_PORT="27017"
 
-echo "Checking MongoDB availability..."
+#echo "Checking MongoDB availability..."
 
 
-mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"
+#mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"
 
-until mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"; do
-  echo "MongoDB not available yet — retrying..."
-  sleep 2
-done
+#until mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"; do
+# echo "MongoDB not available yet — retrying..."
+#  sleep 2
+#done
 
 #until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
 #  echo "MongoDB not available yet — retrying..."
 #  sleep 2
 #done
 
-echo "MongoDB is reachable."
+#echo "MongoDB is reachable."
 
 if [ ! -f "/mnt/.opal_initialised" ]; then
   echo "CWD in customise.sh run attempt"
