@@ -122,7 +122,10 @@ ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
 
 # nc is not installed in the base docker image so add it here
 
-apt-get update && apt-get install -y netcat-openbsd
+#apt-get update && apt-get install -y netcat-openbsd
+
+apt-get update
+apt-get install -y mongodb-mongosh
 
 
 MONGO_HOST="mongodb"
@@ -130,15 +133,18 @@ MONGO_PORT="27017"
 
 echo "Checking MongoDB availability..."
 
+
+mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"
+
+until mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"; do
+  echo "MongoDB not available yet — retrying..."
+  sleep 2
+done
+
 #until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
 #  echo "MongoDB not available yet — retrying..."
 #  sleep 2
 #done
-
-until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
-  echo "MongoDB not available yet — retrying..."
-  sleep 2
-done
 
 echo "MongoDB is reachable."
 
