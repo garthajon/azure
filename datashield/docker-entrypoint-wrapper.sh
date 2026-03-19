@@ -39,7 +39,7 @@ cp /customise.sh /srv/customise.sh
 chmod +x /srv/customise.sh
 echo "finish customise.sh to srv folder"
 
-# Start Opal normally
+# Start the initialisation of Opal normally, this is usually for first time set up and configuration of Opal, but it will also run on subsequent restarts of the container if the .opal_initialised file is not found in the /mnt folder for any reason
 /usr/bin/bash /docker-entrypoint.sh app &
 
 echo "finished docker-entrypoint.sh file config"
