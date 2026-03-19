@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+
+# do not run the wrapper config if the .opal_initialised file exists in the /mnt folder
+# as the exitence of this files indicates the container has already been configured and initialised
+# note that the mnt folder is a volume mount within the container to an azure file share, so the .opal_initialised file will persist across container restarts and redeployments
+if [ -f "/mnt/.opal_initialised" ]; then
+  echo "opal is already initialised exit wrapper"
+  #make the opal process pid 1 to keep the container alive
+  # and exit the wrapper script to avoid running any of the customisation logic
+  exec opal
+fi
+
 echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 # Start Opal using the original entrypoint
 # defined in the opal docker repo source image
