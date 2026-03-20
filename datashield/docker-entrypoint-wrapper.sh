@@ -5,9 +5,21 @@
 # note that the mnt folder is a volume mount within the container to an azure file share, so the .opal_initialised file will persist across container restarts and redeployments
 if [ -f "/mnt/.opal_initialised" ]; then
   echo "opal is already initialised exit wrapper"
+
+  # by not placing an ampersand at the end of this command
+  # we ensure that the opal process becomes the foreground process and takes PID 1, 
+  # which keeps the container alive and allows it to be managed properly by the container orchestrator, such as Kubernetes or Azure Container Instances
+  # this line ensures the correct start up initiation of the opal server using the original entrypoint script provided in the opal docker image,
+  # and it also ensures that the wrapper script does not run any of the customisation logic again, which is important to avoid potential issues with re-running configuration scripts on an already initialised opal instance
+  # so the important thing here is that in the event that the container has already been configured
+  # the wrapper is exited eloquently making the entrypoint script the foreground pid 1 process
+  /usr/bin/bash /docker-entrypoint.sh app 
   #make the opal process pid 1 to keep the container alive
   # and exit the wrapper script to avoid running any of the customisation logic
-  exec opal
+
+  # i thought that exec opal was sufficient to start the opal container and keep it alive, 
+  #but it seems that the original entrypoint script provided in the opal docker image is necessary to properly start the opal server, so we need to call the original entrypoint script directly to ensure the correct start up of the opal server, and we do not need to use exec opal here as the original entrypoint script will take care of starting the opal server and keeping it alive as the foreground process
+ # exec opal
 fi
 
 echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
