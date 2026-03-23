@@ -47,6 +47,15 @@ if [ -f "/mnt/.opal_initialised" ]; then
  # exec opal
 fi
 
+# even if opal has  been initialsed we should still run  /usr/bin/bash /docker-entrypoint.sh app 
+# because this is equivalent to a 'boot' script to start opal up properly 
+# and this is what that script does - 
+# Starts required services
+# Initializes runtime config
+# Connects to MongoDB
+# Launches the Opal application
+
+
 echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 # Start Opal using the original entrypoint
 # defined in the opal docker repo source image
