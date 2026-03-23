@@ -1,5 +1,30 @@
 #!/usr/bin/env bash
 
+# if opal has not yet been initialised remove the srv folder
+# and replace it with a link to the mnt folder, 
+# this is so that configuration files and scripts created in initialisation and data
+# will persist across container restarts and redeployments, as the mnt folder is a volume mount to an azure file share, and the srv folder is within the container filesystem and will not persist across restarts and redeployments
+if [ ! -f "/mnt/.opal_initialised" ]; then
+  echo "delete srv folder and create link to mnt folder for persistence across restarts and redeployments"
+  # total removal of srv folder prior to creating the link to ensure that there are no issues with existing files or folders in the srv folder that could interfere with the linking process, and to ensure a clean setup for the initialisation of opal
+  rm -rf /srv
+  # rm = remove (delete files/directories)
+  # -r = recursive (delete everything inside, including subfolders)
+  # -f = force (no prompts, ignore errors)
+
+  # this completely wipes /srv no confirmation, no undo if /srv contains important data (and isn’t mounted), it’s gone
+
+  # create link as a shortcut to the mnt folder 
+  ln -s /mnt /srv
+
+  #ln = create a link
+  #-s = symbolic link (a shortcut, like a pointer)
+
+  #A symbolic link called /srv that points to /mnt/opal data. This means that when you access /srv, you are actually accessing /mnt/opaldata. Any files created in /srv will be stored in /mnt/opaldata, and any files in /mnt/opaldata will be accessible through /srv. This is useful for persisting data across container restarts, as the /mnt folder is a volume mount to an Azure file share, while the /srv folder is within the container filesystem and would not persist across restarts.
+
+fi
+
+
 # do not run the wrapper config if the .opal_initialised file exists in the /mnt folder
 # as the exitence of this files indicates the container has already been configured and initialised
 # note that the mnt folder is a volume mount within the container to an azure file share, so the .opal_initialised file will persist across container restarts and redeployments
