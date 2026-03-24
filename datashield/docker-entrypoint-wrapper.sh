@@ -2,12 +2,9 @@
 #!/bin/bash
 
 # wipe the mount on first deployment 
-if [ ! -f /mnt/opal/.initialised ]; then
+if [ ! -f /mnt/.initialised ]; then
     echo "First deployment - clearing mount..."
-
     rm -rf /mnt/opal/* /mnt/opal/.[!.]* /mnt/opal/..?*
-
-    touch /mnt/opal/.initialised
 else
     echo "Mount already initialised - skipping wipe"
 fi
