@@ -1,26 +1,71 @@
 #!/usr/bin/env bash
+#!/bin/bash
 
-# if opal has not yet been initialised remove the srv folder
-# and replace it with a link to the mnt folder, 
-# this is so that configuration files and scripts created in initialisation and data
-# will persist across container restarts and redeployments, as the mnt folder is a volume mount to an azure file share, and the srv folder is within the container filesystem and will not persist across restarts and redeployments
-if [ ! -f "/mnt/.opal_initialised" ]; then
-  echo "delete srv folder and create link to mnt folder for persistence across restarts and redeployments"
-  # total removal of srv folder prior to creating the link to ensure that there are no issues with existing files or folders in the srv folder that could interfere with the linking process, and to ensure a clean setup for the initialisation of opal
-  rm -rf /srv
-  # rm = remove (delete files/directories)
-  # -r = recursive (delete everything inside, including subfolders)
-  # -f = force (no prompts, ignore errors)
+# wipe the mount on first deployment 
+if [ ! -f /mnt/opal/.initialised ]; then
+    echo "First deployment - clearing mount..."
 
-  # this completely wipes /srv no confirmation, no undo if /srv contains important data (and isn’t mounted), it’s gone
+    rm -rf /mnt/opal/* /mnt/opal/.[!.]* /mnt/opal/..?*
 
-  # create link as a shortcut to the mnt folder 
-  ln -s /mnt /srv
+    touch /mnt/opal/.initialised
+else
+    echo "Mount already initialised - skipping wipe"
+fi
 
-  #ln = create a link
-  #-s = symbolic link (a shortcut, like a pointer)
+# First run: no persisted data
+if [ ! -d /mnt/opal/data ]; then
+    echo "First run: using local /srv"
 
-  #A symbolic link called /srv that points to /mnt/opal data. This means that when you access /srv, you are actually accessing /mnt/opaldata. Any files created in /srv will be stored in /mnt/opaldata, and any files in /mnt/opaldata will be accessible through /srv. This is useful for persisting data across container restarts, as the /mnt folder is a volume mount to an Azure file share, while the /srv folder is within the container filesystem and would not persist across restarts.
+    # Start Opal normally (local /srv)
+    # and then return to/carry on with the main wrapper script - this is what the ampersand is for 
+    /usr/bin/bash /docker-entrypoint.sh app &
+
+    # Wait for setup to complete (you may need a better check)
+    sleep 30
+    
+    echo "finished docker-entrypoint.sh file config"
+
+else
+    echo "Subsequent run: using persisted data"
+
+    # Replace /srv with persisted data from the mounted volume
+    # if this is a container restart
+    rm -rf /srv
+    cp -r /mnt/opal /srv
+
+    # since this is a restart, ensure the sync loop is running 
+    
+    #########################################
+    # Background sync function
+    #########################################
+    sync_loop() {
+        while true; do
+            echo "Syncing /srv -> /mnt/opal..."
+            rsync -a --delete /srv/ /mnt/opal/
+            sleep 300   # every 5 minutes (adjust if needed)
+        done
+    }
+
+    #########################################
+    # Shutdown handler
+    #########################################
+    shutdown_handler() {
+        echo "Shutdown signal received - final sync..."
+        rsync -a --delete /srv/ /mnt/opal/
+        echo "Final sync complete"
+    }
+
+    trap shutdown_handler SIGTERM SIGINT
+
+    #########################################
+    # Start background sync
+    #########################################
+    sync_loop &
+
+
+    # Start Opal using local filesystem again
+    # note that the control flow will not now return to the wrapper script after this point as we are not using an ampersand to run the entrypoint script in the background, so the entrypoint script will become the foreground process and take PID 1, which is important for proper container management and lifecycle handling by the container orchestrator, such as Kubernetes or Azure Container Instances
+    exec /usr/bin/bash /docker-entrypoint.sh app
 
 fi
 
@@ -28,8 +73,8 @@ fi
 # do not run the wrapper config if the .opal_initialised file exists in the /mnt folder
 # as the exitence of this files indicates the container has already been configured and initialised
 # note that the mnt folder is a volume mount within the container to an azure file share, so the .opal_initialised file will persist across container restarts and redeployments
-if [ -f "/mnt/.opal_initialised" ]; then
-  echo "opal is already initialised exit wrapper"
+#if [ -f "/mnt/.opal_initialised" ]; then
+ # echo "opal is already initialised exit wrapper"
 
   # by not placing an ampersand at the end of this command
   # we ensure that the opal process becomes the foreground process and takes PID 1, 
@@ -38,14 +83,14 @@ if [ -f "/mnt/.opal_initialised" ]; then
   # and it also ensures that the wrapper script does not run any of the customisation logic again, which is important to avoid potential issues with re-running configuration scripts on an already initialised opal instance
   # so the important thing here is that in the event that the container has already been configured
   # the wrapper is exited eloquently making the entrypoint script the foreground pid 1 process
-  /usr/bin/bash /docker-entrypoint.sh app 
+#  /usr/bin/bash /docker-entrypoint.sh app 
   #make the opal process pid 1 to keep the container alive
   # and exit the wrapper script to avoid running any of the customisation logic
 
   # i thought that exec opal was sufficient to start the opal container and keep it alive, 
   #but it seems that the original entrypoint script provided in the opal docker image is necessary to properly start the opal server, so we need to call the original entrypoint script directly to ensure the correct start up of the opal server, and we do not need to use exec opal here as the original entrypoint script will take care of starting the opal server and keeping it alive as the foreground process
  # exec opal
-fi
+#fi
 
 # even if opal has  been initialsed we should still run  /usr/bin/bash /docker-entrypoint.sh app 
 # because this is equivalent to a 'boot' script to start opal up properly 
@@ -86,9 +131,8 @@ chmod +x /srv/customise.sh
 echo "finish customise.sh to srv folder"
 
 # Start the initialisation of Opal normally, this is usually for first time set up and configuration of Opal, but it will also run on subsequent restarts of the container if the .opal_initialised file is not found in the /mnt folder for any reason
-/usr/bin/bash /docker-entrypoint.sh app &
+#/usr/bin/bash /docker-entrypoint.sh app &
 
-echo "finished docker-entrypoint.sh file config"
 
 
 
@@ -256,10 +300,50 @@ ls -la
 set -e
 
 
+
+# Ensure mount exists
+mkdir -p /mnt/opal
+# Copy  set up data to persistent storage
+cp -r /srv/* /mnt/opal/
+
 echo "finish customise.sh config"
+
+
+#########################################
+# Background sync function - to ensure SRC back up on the mount and live SRC are synced
+#########################################
+sync_loop() {
+    while true; do
+        echo "Syncing /srv -> /mnt/opal..."
+        rsync -a --delete /srv/ /mnt/opal/
+        sleep 300   # every 5 minutes (adjust if needed)
+    done
+}
+
+#########################################
+# Shutdown handler - ensure SRC is synced to the mount on shutdown to avoid data/settinngs loss
+#########################################
+shutdown_handler() {
+    echo "Shutdown signal received - final sync..."
+    rsync -a --delete /srv/ /mnt/opal/
+    echo "Final sync complete"
+}
+
+trap shutdown_handler SIGTERM SIGINT
+
+#########################################
+# Start background sync
+#########################################
+sync_loop &
 # Keep container alive
 wait $OPAL_PID
 # make opal the foreground process to keep the container alive
 # opal becomes PID 1
+# but sync loop is still running in the background to ensure data is synced to the persistent storage every 5 minutes and on shutdown
+# not ideal but its a workaround pending a better solution to ensure the SRC directory is used persistently  and data/settings are not lost on container restarts and redeployments, 
+# which is a key requirement for our use case of running opal in a containerised environment with an azure file share as the persistent storage solution for the opal data and settings
+# its the permissions on the azure file share that is causing the big issue here
 exec opal
+
+
 
