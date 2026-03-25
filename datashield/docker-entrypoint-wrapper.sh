@@ -4,6 +4,7 @@
 # wipe the mount on first deployment 
 if [ ! -f /mnt/.initialised ]; then
     echo "First deployment - clearing mount..."
+    cd /
     rm -rf /mnt/opal/* /mnt/opal/.[!.]* /mnt/opal/..?*
 else
     echo "Mount already initialised - skipping wipe"
@@ -29,7 +30,6 @@ else
     # if this is a container restart
     # move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
     cd /
-
     rm -rf /srv
     cp -r /mnt/opal /srv
 
