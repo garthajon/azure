@@ -41,7 +41,9 @@ else
     sync_loop() {
         while true; do
             echo "Syncing /srv -> /mnt/opal..."
-            rsync -a --delete /srv/ /mnt/opal/
+            # exclude tmlog files from the sync to avoid potential issues with file locks and concurrent access to log files by both the opal server and the rsync process, which could cause errors or performance issues, and since log files are typically not critical for the persistent storage of the opal data and settings, excluding them from the sync should not cause any issues with data integrity or loss of important information, while also improving the stability and performance of the sync process
+            rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+            #rsync -a --delete /srv/ /mnt/opal/
             sleep 300   # every 5 minutes (adjust if needed)
         done
     }
@@ -51,7 +53,8 @@ else
     #########################################
     shutdown_handler() {
         echo "Shutdown signal received - final sync..."
-        rsync -a --delete /srv/ /mnt/opal/
+       # rsync -a --delete /srv/ /mnt/opal/
+        rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
         echo "Final sync complete"
     }
 
@@ -305,7 +308,8 @@ cd /
 # Ensure mount exists
 mkdir -p /mnt/opal
 # Copy  set up data to persistent storage
-cp -r /srv/* /mnt/opal/
+#cp -r /srv/* /mnt/opal/
+rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
 
 echo "finish customise.sh config"
 
@@ -316,7 +320,8 @@ echo "finish customise.sh config"
 sync_loop() {
     while true; do
         echo "Syncing /srv -> /mnt/opal..."
-        rsync -a --delete /srv/ /mnt/opal/
+        #rsync -a --delete /srv/ /mnt/opal/
+        rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
         sleep 300   # every 5 minutes (adjust if needed)
     done
 }
@@ -326,7 +331,8 @@ sync_loop() {
 #########################################
 shutdown_handler() {
     echo "Shutdown signal received - final sync..."
-    rsync -a --delete /srv/ /mnt/opal/
+    #rsync -a --delete /srv/ /mnt/opal/
+    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
     echo "Final sync complete"
 }
 
