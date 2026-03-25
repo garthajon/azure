@@ -27,6 +27,9 @@ else
 
     # Replace /srv with persisted data from the mounted volume
     # if this is a container restart
+    # move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
+    cd /
+
     rm -rf /srv
     cp -r /mnt/opal /srv
 
@@ -296,7 +299,8 @@ ls -la
 # re-enable exit on error
 set -e
 
-
+# move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
+cd /
 
 # Ensure mount exists
 mkdir -p /mnt/opal
