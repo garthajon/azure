@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #!/bin/bash
-
+# clear temp locks
+rm -rf /tmp/*
 # wipe the mount on first deployment 
 if [ ! -f /mnt/.initialised ]; then
     echo "First deployment - clearing mount..."
@@ -13,6 +14,10 @@ fi
 # First run: no persisted data
 if [ ! -d /mnt/opal/data ]; then
     echo "First run: using local /srv"
+
+    cd /
+    echo "Cleaning Atomikos logs..."
+    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
 
     # Start Opal normally (local /srv)
     # and then return to/carry on with the main wrapper script - this is what the ampersand is for 
@@ -31,7 +36,8 @@ else
     # move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
     cd /
     rm -rf /srv
-    cp -r /mnt/opal /srv
+    cp -r /mnt/opal/. /srv/
+    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
 
     # since this is a restart, ensure the sync loop is running 
     
@@ -56,6 +62,7 @@ else
         echo "Shutdown signal received - final sync..."
        # rsync -a --delete /srv/ /mnt/opal/
         rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+        find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
         echo "Final sync complete"
     }
 
@@ -311,6 +318,7 @@ mkdir -p /mnt/opal
 # Copy  set up data to persistent storage
 #cp -r /srv/* /mnt/opal/
 rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
 
 echo "finish customise.sh config"
 
@@ -334,6 +342,7 @@ shutdown_handler() {
     echo "Shutdown signal received - final sync..."
     #rsync -a --delete /srv/ /mnt/opal/
     rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
     echo "Final sync complete"
 }
 
