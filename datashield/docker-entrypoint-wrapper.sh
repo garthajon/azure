@@ -76,8 +76,12 @@ else
 
     # Start Opal using local filesystem again
     # note that the control flow will not now return to the wrapper script after this point as we are not using an ampersand to run the entrypoint script in the background, so the entrypoint script will become the foreground process and take PID 1, which is important for proper container management and lifecycle handling by the container orchestrator, such as Kubernetes or Azure Container Instances
+    # this starts the container up with the local /srv directory
+    # and this exits the wrapper script
+    # hence this section runs for subsequent restarts of the container
     exec /usr/bin/bash /docker-entrypoint.sh app
-
+    OPAL_PID=$!
+    wait $OPAL_PID
 fi
 
 
@@ -141,10 +145,11 @@ cp /customise.sh /srv/customise.sh
 chmod +x /srv/customise.sh
 echo "finish customise.sh to srv folder"
 
-# Start the initialisation of Opal normally, this is usually for first time set up and configuration of Opal, but it will also run on subsequent restarts of the container if the .opal_initialised file is not found in the /mnt folder for any reason
-#/usr/bin/bash /docker-entrypoint.sh app &
-
-
+# Start the initialisation of Opal normally and then continue with the wrapper script in order to run set up
+# this will only ever run for first time start up
+/usr/bin/bash /docker-entrypoint.sh app &
+# capture the PID id of the opal container startup process now running in the background
+OPAL_PID=$!
 
 
 echo "start check opal up"
@@ -157,7 +162,8 @@ echo "start check opal up"
 #!/bin/sh
 
 # List of ports to try
-PORTS="8080 8443 8081"
+#PORTS="8080 8443 8081"
+PORTS="8080"
 
 # List of endpoints to try
 ENDPOINTS="/ws/system/status /status /healthcheck /"
@@ -200,7 +206,7 @@ done
 
 # $! contains the PID of the last background process, which is the OPAL server we started earlier
 # so we assign the process id for opal to a variable
-OPAL_PID=$!
+
 
 # At this point, OPAL is reachable, safe to run configuration scripts
 # bash /path/to/custom.sh
@@ -353,14 +359,26 @@ trap shutdown_handler SIGTERM SIGINT
 #########################################
 #sync_loop &
 # Keep container alive
-wait $OPAL_PID
+
 # make opal the foreground process to keep the container alive
 # opal becomes PID 1
 # but sync loop is still running in the background to ensure data is synced to the persistent storage every 5 minutes and on shutdown
 # not ideal but its a workaround pending a better solution to ensure the SRC directory is used persistently  and data/settings are not lost on container restarts and redeployments, 
 # which is a key requirement for our use case of running opal in a containerised environment with an azure file share as the persistent storage solution for the opal data and settings
 # its the permissions on the azure file share that is causing the big issue here
-exec opal
 
+# OPAL cannot be PID 1 because we are using a wrapper
+# so do not use 'exec opal' which would make it pid 1 but rather leave it running in the 
+# backgroun
+#exec opal
+
+# this effectively says 'stay inside this wrapper script until the opal process is finished'
+# but as the wrapper is PID 1, this basically keeps the wrapper script running
+# and therefore indirectly the container running as a background process 
+# the wait instruction in the wrapper keeps the container alive 
+# and also the wrapper running
+wait $OPAL_PID
+
+ 
 
 
