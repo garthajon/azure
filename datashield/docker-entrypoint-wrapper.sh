@@ -38,15 +38,16 @@ else
     #########################################
     # Background sync function
     #########################################
-    sync_loop() {
-        while true; do
-            echo "Syncing /srv -> /mnt/opal..."
-            # exclude tmlog files from the sync to avoid potential issues with file locks and concurrent access to log files by both the opal server and the rsync process, which could cause errors or performance issues, and since log files are typically not critical for the persistent storage of the opal data and settings, excluding them from the sync should not cause any issues with data integrity or loss of important information, while also improving the stability and performance of the sync process
-            rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-            #rsync -a --delete /srv/ /mnt/opal/
-            sleep 300   # every 5 minutes (adjust if needed)
-        done
-    }
+
+    #sync_loop() {
+    #    while true; do
+    #        echo "Syncing /srv -> /mnt/opal..."
+    #        # exclude tmlog files from the sync to avoid potential issues with file locks and concurrent access to log files by both the opal server and the rsync process, which could cause errors or performance issues, and since log files are typically not critical for the persistent storage of the opal data and settings, excluding them from the sync should not cause any issues with data integrity or loss of important information, while also improving the stability and performance of the sync process
+    #        rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+    #        #rsync -a --delete /srv/ /mnt/opal/
+    #        sleep 300   # every 5 minutes (adjust if needed)
+    #    done
+    #}
 
     #########################################
     # Shutdown handler
@@ -63,7 +64,7 @@ else
     #########################################
     # Start background sync
     #########################################
-    sync_loop &
+    #sync_loop &
 
 
     # Start Opal using local filesystem again
@@ -317,14 +318,14 @@ echo "finish customise.sh config"
 #########################################
 # Background sync function - to ensure SRC back up on the mount and live SRC are synced
 #########################################
-sync_loop() {
-    while true; do
-        echo "Syncing /srv -> /mnt/opal..."
-        #rsync -a --delete /srv/ /mnt/opal/
-        rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-        sleep 300   # every 5 minutes (adjust if needed)
-    done
-}
+#sync_loop() {
+#    while true; do
+#        echo "Syncing /srv -> /mnt/opal..."
+#        #rsync -a --delete /srv/ /mnt/opal/
+#        rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+#        sleep 300   # every 5 minutes (adjust if needed)
+#    done
+#}
 
 #########################################
 # Shutdown handler - ensure SRC is synced to the mount on shutdown to avoid data/settinngs loss
@@ -341,7 +342,7 @@ trap shutdown_handler SIGTERM SIGINT
 #########################################
 # Start background sync
 #########################################
-sync_loop &
+#sync_loop &
 # Keep container alive
 wait $OPAL_PID
 # make opal the foreground process to keep the container alive
