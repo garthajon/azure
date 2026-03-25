@@ -79,7 +79,8 @@ else
     # this starts the container up with the local /srv directory
     # and this exits the wrapper script
     # hence this section runs for subsequent restarts of the container
-    exec /usr/bin/bash /docker-entrypoint.sh app
+    # even here the start up should run as a wrapper process 
+    exec /usr/bin/bash /docker-entrypoint.sh app &
     OPAL_PID=$!
     wait $OPAL_PID
 fi
@@ -116,159 +117,174 @@ fi
 # Launches the Opal application
 
 
-echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
+#echo "Runtime user: $(id -un) (uid=$(id -u), gid=$(id -g))"
 # Start Opal using the original entrypoint
 # defined in the opal docker repo source image
 # set +e to avoid exiting on first error
-echo "start docker-entrypoint.sh file up"
-set +e
+#echo "start docker-entrypoint.sh file up"
+if [ ! -f /mnt/.initialised ]; then
+    set +e
 
 # check and print the bash version
-which bash || echo "no bash"
+#which bash || echo "no bash"
 
 # review current working directory contents
-echo "PWD: $(pwd)"
-echo "User: $(whoami)"
-echo "current WORKDIR contents:"
-ls -la
+#echo "PWD: $(pwd)"
+#echo "User: $(whoami)"
+#echo "current WORKDIR contents:"
+#ls -la
 
 #/bin/bash /docker-entrypoint.sh "$@" &
-echo "start customise.sh to srv folder"
+    echo "start customise.sh to srv folder"
 # note putting a forward slash before customise.sh
 # explicitly means we are copying from the root directory of the build context
 # to the /srv folder in the container
 # Copy the script inside the container filesystem
 # replace invalid docker buildcontext runtime copy commands with
 # valid shell commands
-cp /customise.sh /srv/customise.sh
+    cp /customise.sh /srv/customise.sh
 # Make it executable
-chmod +x /srv/customise.sh
-echo "finish customise.sh to srv folder"
+    chmod +x /srv/customise.sh
+    echo "finish customise.sh to srv folder"
 
 # Start the initialisation of Opal normally and then continue with the wrapper script in order to run set up
 # this will only ever run for first time start up
-/usr/bin/bash /docker-entrypoint.sh app &
+    /usr/bin/bash /docker-entrypoint.sh app &
 # capture the PID id of the opal container startup process now running in the background
-OPAL_PID=$!
+    OPAL_PID=$!
 
 
-echo "start check opal up"
-# Wait for Opal
-#until curl -sf http://localhost:8080/ws/system/status >/dev/null; do
-#  sleep 10
-#  echo "still stuck in a loop waiting for OPAL to start"
-# done
+    echo "start check opal up"
+    # Wait for Opal
+    #until curl -sf http://localhost:8080/ws/system/status >/dev/null; do
+    #  sleep 10
+    #  echo "still stuck in a loop waiting for OPAL to start"
+    # done
 
-#!/bin/sh
+    #!/bin/sh
 
-# List of ports to try
-#PORTS="8080 8443 8081"
-PORTS="8080"
+    # List of ports to try
+    #PORTS="8080 8443 8081"
+    PORTS="8080"
 
-# List of endpoints to try
-ENDPOINTS="/ws/system/status /status /healthcheck /"
+    # List of endpoints to try
+    ENDPOINTS="/ws/system/status /status /healthcheck /"
 
-echo "Waiting for OPAL to become reachable..."
+    echo "Waiting for OPAL to become reachable..."
 
-while :; do
-  SUCCESS=0
+    while :; do
+      SUCCESS=0
 
-  for PORT in $PORTS; do
-    for ENDPOINT in $ENDPOINTS; do
-      URL="http://localhost:${PORT}${ENDPOINT}"
-      echo "Probing ${URL} ..."
+      for PORT in $PORTS; do
+        for ENDPOINT in $ENDPOINTS; do
+          URL="http://localhost:${PORT}${ENDPOINT}"
+          echo "Probing ${URL} ..."
 
-      # Send request; capture body and exit code
-      RESPONSE=$(curl -s -o /tmp/opal_response.json -w "%{http_code}" "$URL")
-      RC=$?
+          # Send request; capture body and exit code
+          RESPONSE=$(curl -s -o /tmp/opal_response.json -w "%{http_code}" "$URL")
+          RC=$?
 
-      if [ "$RC" -eq 0 ]; then
-        echo "SUCCESS: OPAL responded on ${URL}"
-        echo "HTTP status code: ${RESPONSE}"
-        echo "Response body (first 10 lines):"
-        head -n 10 /tmp/opal_response.json
-        SUCCESS=1
-        break 2  # Exit both loops on first successful endpoint
-      else
-        echo "FAILED: No response from ${URL} (curl exit code ${RC})"
+          if [ "$RC" -eq 0 ]; then
+            echo "SUCCESS: OPAL responded on ${URL}"
+            echo "HTTP status code: ${RESPONSE}"
+            echo "Response body (first 10 lines):"
+            head -n 10 /tmp/opal_response.json
+            SUCCESS=1
+            break 2  # Exit both loops on first successful endpoint
+          else
+            echo "FAILED: No response from ${URL} (curl exit code ${RC})"
+          fi
+        done
+      done
+
+      if [ $SUCCESS -eq 1 ]; then
+        echo "OPAL is reachable. Proceeding..."
+        break
       fi
+
+      echo "OPAL not reachable yet on any known port/endpoint. Sleeping 10s..."
+      sleep 10
     done
-  done
 
-  if [ $SUCCESS -eq 1 ]; then
-    echo "OPAL is reachable. Proceeding..."
-    break
-  fi
-
-  echo "OPAL not reachable yet on any known port/endpoint. Sleeping 10s..."
-  sleep 10
-done
-
-# $! contains the PID of the last background process, which is the OPAL server we started earlier
-# so we assign the process id for opal to a variable
+    # $! contains the PID of the last background process, which is the OPAL server we started earlier
+    # so we assign the process id for opal to a variable
 
 
-# At this point, OPAL is reachable, safe to run configuration scripts
-# bash /path/to/custom.sh
+    # At this point, OPAL is reachable, safe to run configuration scripts
+    # bash /path/to/custom.sh
 
 
-echo "finish check opal up"
-# Run customisation once
-#echo "start copying customise.sh file"
-#cd /mnt
-# we copy the customise.sh file from our repo to an absolute path /srv/customise.sh
-# which should ensure that the file is definitely copied to the /srv folder in the container
-#'RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /srv/customise.sh
-#RUN chmod +x /srv/customise.sh
-# Make executable
-#RUN chmod +x /customise.
-#echo "finished copying file start customise.sh config"
+    echo "finish check opal up"
+    # Run customisation once
+    #echo "start copying customise.sh file"
+    #cd /mnt
+    # we copy the customise.sh file from our repo to an absolute path /srv/customise.sh
+    # which should ensure that the file is definitely copied to the /srv folder in the container
+    #'RUN wget https://raw.githubusercontent.com/garthajon/azure/refs/heads/main/datashield/customise.sh -O /srv/customise.sh
+    #RUN chmod +x /srv/customise.sh
+    # Make executable
+    #RUN chmod +x /customise.
+    #echo "finished copying file start customise.sh config"
 
-# review current working directory contents
-echo "PWD: $(pwd)"
-echo "User: $(whoami)"
-echo "current WORKDIR contents:"
-ls -la
+    # review current working directory contents
+    #echo "PWD: $(pwd)"
+    #echo "User: $(whoami)"
+    #echo "current WORKDIR contents:"
+    #ls -la
 
-ls -la /mnt || echo "/mnt missing"
-ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
-
-
-#if [ ! -f /mnt/.opal_initialised ]; then
-
-# until the opal container can talk to the mongo container we should not try to run the customise.sh script
-
-# nc is not installed in the base docker image so add it here
-
-#apt-get update && apt-get install -y netcat-openbsd
-
-#apt-get update
-#apt-get install -y mongodb-mongosh
+    #ls -la /mnt || echo "/mnt missing"
+    #ls -la /srv/customise.sh  || echo "/srv/customise.sh missing"
 
 
-#MONGO_HOST="mongodb"
-#MONGO_PORT="27017"
+    #if [ ! -f /mnt/.opal_initialised ]; then
 
-#echo "Checking MongoDB availability..."
+    # until the opal container can talk to the mongo container we should not try to run the customise.sh script
+
+    # nc is not installed in the base docker image so add it here
+
+    #apt-get update && apt-get install -y netcat-openbsd
+
+    #apt-get update
+    #apt-get install -y mongodb-mongosh
 
 
-#mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"
+    #MONGO_HOST="mongodb"
+    #MONGO_PORT="27017"
 
-#until mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"; do
-# echo "MongoDB not available yet — retrying..."
-#  sleep 2
-#done
+    #echo "Checking MongoDB availability..."
 
-#until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
-#  echo "MongoDB not available yet — retrying..."
-#  sleep 2
-#done
 
-#echo "MongoDB is reachable."
+    #mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"
 
-if [ ! -f "/mnt/.opal_initialised" ]; then
-  echo "CWD in customise.sh run attempt"
-  /usr/bin/bash "/srv/customise.sh"
+    #until mongosh "mongodb://user:pass@mongo:27017/?authSource=admin"; do
+    # echo "MongoDB not available yet — retrying..."
+    #  sleep 2
+    #done
+
+    #until nc -z "$MONGO_HOST" "$MONGO_PORT"; do
+    #  echo "MongoDB not available yet — retrying..."
+    #  sleep 2
+    #done
+
+      #echo "MongoDB is reachable."
+    echo "CWD in customise.sh run attempt"
+    # this should also run as a background process and leave the wrapper running 
+    /usr/bin/bash "/srv/customise.sh" &
+
+  # re-enable exit on error
+    set -e
+
+    # move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
+    cd /
+
+    # Ensure mount exists
+    mkdir -p /mnt/opal
+    # Copy  set up data to persistent storage
+    #cp -r /srv/* /mnt/opal/
+    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
+
+    echo "finish customise.sh config"
 fi
 
 
@@ -291,11 +307,6 @@ fi
 
 
 
-echo "PWD: $(pwd)"
-echo "User: $(whoami)"
-echo "current WORKDIR contents:"
-ls -la
-
 
 #if [ ! -f /mnt/.opal_initialised ]; then
 #  CWD="$(pwd)"
@@ -313,20 +324,6 @@ ls -la
 #fi
 
 
-# re-enable exit on error
-set -e
-
-# move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
-cd /
-
-# Ensure mount exists
-mkdir -p /mnt/opal
-# Copy  set up data to persistent storage
-#cp -r /srv/* /mnt/opal/
-rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
-
-echo "finish customise.sh config"
 
 
 #########################################
