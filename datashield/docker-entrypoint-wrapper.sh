@@ -81,7 +81,7 @@ else
     # and this exits the wrapper script
     # hence this section runs for subsequent restarts of the container
     # even here the start up should run as a wrapper process 
-    exec /usr/bin/bash /docker-entrypoint.sh app &
+    #exec /usr/bin/bash /docker-entrypoint.sh app &
     OPAL_PID=$!
     wait $OPAL_PID
 fi
@@ -150,7 +150,7 @@ if [ ! -f /mnt/.initialised ]; then
 
 # Start the initialisation of Opal normally and then continue with the wrapper script in order to run set up
 # this will only ever run for first time start up
-    /usr/bin/bash /docker-entrypoint.sh app &
+    #/usr/bin/bash /docker-entrypoint.sh app &
 # capture the PID id of the opal container startup process now running in the background
     OPAL_PID=$!
 
