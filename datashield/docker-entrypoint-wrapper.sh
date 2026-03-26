@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
-set -e
+
+trap shutdown_handler SIGTERM SIGINT
+
+shutdown_handler() {
+    echo "Shutdown signal received - final sync..."
+    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
+    kill "$OPAL_PID"
+    wait "$OPAL_PID" || true
+    fi
+    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+}
+
 
 #  Proper PID 1 wrapper model
 # Wrapper stays alive
@@ -41,7 +52,7 @@ fi
 echo "Starting Opal..."
 /usr/bin/bash /docker-entrypoint.sh app &
 OPAL_PID=$!
-
+set +e
 #########################################
 # First-run  (configure Opal)
 #########################################
@@ -57,7 +68,7 @@ if [ "$FIRST_RUN" = true ]; then
           URL="http://localhost:${PORT}${ENDPOINT}"
           echo "Probing ${URL} ..."
           # Send request; capture body and exit code
-          RESPONSE=$(curl -s -o /tmp/opal_response.json -w "%{http_code}" "$URL")
+          RESPONSE=$(curl -s -o /tmp/opal_response.json -w "%{http_code}" "$URL" || true)
           RC=$?
           if [ "$RC" -eq 0 ]; then
             echo "SUCCESS: OPAL responded on ${URL}"
@@ -99,25 +110,20 @@ if [ "$FIRST_RUN" = true ]; then
     # Wait for Opal (this keeps container alive)
     #########################################
 fi
-
+set -e
 #########################################
 # Shutdown handler
 #########################################
 # if azure sends sigterm wrapper gets it 
 # so use opal pid to shutdown opal gracefully and then sync data to the mount
 
-shutdown_handler() {
-    echo "Shutdown signal received - final sync..."
-    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
-    kill "$OPAL_PID"
-    wait "$OPAL_PID" || true
-    fi
-    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-}
-trap shutdown_handler SIGTERM SIGIN
+
 
 wait $OPAL_PID
 
+
+# If OPAL exits naturally, run shutdown anyway
+shutdown_handler
 #exec /usr/bin/bash /docker-entrypoint.sh app &
 #OPAL_PID=$!
 #wait $OPAL_PID
