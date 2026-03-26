@@ -6,21 +6,6 @@ set -e
 # Opal runs as child
 # wait $OPAL_PID keeps container alive
 
-#########################################
-# Shutdown handler
-#########################################
-# if azure sends sigterm wrapper gets it 
-# so use opal pid to shutdown opal gracefully and then sync data to the mount
-
-shutdown_handler() {
-    echo "Shutdown signal received - final sync..."
-    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
-    kill "$OPAL_PID"
-    wait "$OPAL_PID" || true
-    fi
-    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-}
-trap shutdown_handler SIGTERM SIGINT
 
 #This is exactly what you want in Microsoft Azure for correct shutdown signal handling:
 
@@ -114,6 +99,22 @@ if [ "$FIRST_RUN" = true ]; then
     # Wait for Opal (this keeps container alive)
     #########################################
 fi
+
+#########################################
+# Shutdown handler
+#########################################
+# if azure sends sigterm wrapper gets it 
+# so use opal pid to shutdown opal gracefully and then sync data to the mount
+
+shutdown_handler() {
+    echo "Shutdown signal received - final sync..."
+    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
+    kill "$OPAL_PID"
+    wait "$OPAL_PID" || true
+    fi
+    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+}
+trap shutdown_handler SIGTERM SIGIN
 
 wait $OPAL_PID
 
