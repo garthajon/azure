@@ -12,12 +12,13 @@ else
 fi
 
 # First run: no persisted data
-if [ ! -d /mnt/opal/data ]; then
+#if [ ! -d /mnt/opal/data ]; then
+if [ ! -f /mnt/.initialised ]; then
     echo "First run: using local /srv"
 
-    cd /
-    echo "Cleaning Atomikos logs..."
-    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
+    #cd /
+    #echo "Cleaning Atomikos logs..."
+    #find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
 
     # Start Opal normally (local /srv)
     # and then return to/carry on with the main wrapper script - this is what the ampersand is for 
@@ -37,7 +38,7 @@ else
     cd /
     rm -rf /srv
     cp -r /mnt/opal/. /srv/
-    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
+    #find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
 
     # since this is a restart, ensure the sync loop is running 
     
@@ -62,7 +63,7 @@ else
         echo "Shutdown signal received - final sync..."
        # rsync -a --delete /srv/ /mnt/opal/
         rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-        find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
+        #find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
         echo "Final sync complete"
     }
 
@@ -282,7 +283,7 @@ if [ ! -f /mnt/.initialised ]; then
     # Copy  set up data to persistent storage
     #cp -r /srv/* /mnt/opal/
     rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
+    #find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
 
     echo "finish customise.sh config"
 fi
@@ -345,7 +346,7 @@ shutdown_handler() {
     echo "Shutdown signal received - final sync..."
     #rsync -a --delete /srv/ /mnt/opal/
     rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-    find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
+    #find /srv -name "tmlog*" -exec rm -rf {} + 2>/dev/null || true
     echo "Final sync complete"
 }
 
