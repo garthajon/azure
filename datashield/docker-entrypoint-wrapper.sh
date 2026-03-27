@@ -43,7 +43,7 @@ if [ "$FIRST_RUN" = true ]; then
 else
     echo "Restoring persisted data"
     rm -rf /srv/*
-    cp -r /mnt/opal/. /srv/
+    rsync -a --exclude 'tmlog*' /mnt/opal/ /srv/
 fi
 
 #########################################
