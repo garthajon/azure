@@ -51,6 +51,7 @@ fi
 #########################################
 echo "[WRAPPER] Cleaning Atomikos logs..."
 rm -f /srv/tmlog* || true
+find /srv -name "tmlog*" -type f -delete || true
 echo "Starting Opal..."
 /usr/bin/bash /docker-entrypoint.sh app &
 OPAL_PID=$!
