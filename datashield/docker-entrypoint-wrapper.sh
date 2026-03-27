@@ -49,6 +49,8 @@ fi
 #########################################
 # Start Opal (ONLY ONCE)
 #########################################
+echo "[WRAPPER] Cleaning Atomikos logs..."
+rm -f /srv/tmlog* || true
 echo "Starting Opal..."
 /usr/bin/bash /docker-entrypoint.sh app &
 OPAL_PID=$!
