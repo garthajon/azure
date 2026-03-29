@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+cd /
+# grant read, write and execute permissions to the srv mounted directory
+chmod 777 /srv
 
 #trap shutdown_handler SIGTERM SIGINT
 
