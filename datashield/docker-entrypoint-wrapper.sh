@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-trap shutdown_handler SIGTERM SIGINT
+#trap shutdown_handler SIGTERM SIGINT
 
-shutdown_handler() {
-    echo "Shutdown signal received - final sync..."
-    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
-    kill "$OPAL_PID"
-    wait "$OPAL_PID" || true
-    fi
-    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-}
+#shutdown_handler() {
+#    echo "Shutdown signal received - final sync..."
+#    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
+#    kill "$OPAL_PID"
+#    wait "$OPAL_PID" || true
+#    fi
+#    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+#}
 
 
 #  Proper PID 1 wrapper model
@@ -26,7 +26,7 @@ shutdown_handler() {
 #Data sync to persistent storage happens after
 
 FIRST_RUN=false
-if [ ! -f /mnt/.initialised ]; then
+if [ ! -f /srv/.initialised ]; then
     FIRST_RUN=true
 fi
 
@@ -35,24 +35,24 @@ fi
 #########################################
 if [ "$FIRST_RUN" = true ]; then
     echo "First run: cleaning mount"
-    rm -rf /mnt/opal/* /mnt/opal/.[!.]* /mnt/opal/..?* || true
+    rm -rf /srv/* /srv/opal/.[!.]* /srv/opal/..?* || true
     # move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
-    cd /
+    #cd /
     # Ensure mount exists
-    mkdir -p /mnt/opal
-else
-    echo "Restoring persisted data"
-    rm -rf /srv/*
-    rsync -a --exclude 'tmlog*' /mnt/opal/ /srv/
+    #mkdir -p /srv
+#else
+#    echo "Restoring persisted data"
+#    rm -rf /srv/*
+#    rsync -a --exclude 'tmlog*' /mnt/opal/ /srv/
 fi
 
 #########################################
 # Start Opal (ONLY ONCE)
 #########################################
-echo "[WRAPPER] Cleaning Atomikos logs..."
-rm -f /srv/tmlog* || true
-find /srv -name "tmlog*" -type f -delete || true
-echo "Starting Opal..."
+#echo "[WRAPPER] Cleaning Atomikos logs..."
+#rm -f /srv/tmlog* || true
+#find /srv -name "tmlog*" -type f -delete || true
+#echo "Starting Opal..."
 /usr/bin/bash /docker-entrypoint.sh app &
 OPAL_PID=$!
 set +e
@@ -108,7 +108,7 @@ if [ "$FIRST_RUN" = true ]; then
     # but don't use exec and keep wrapper alive
     /usr/bin/bash "/srv/customise.sh"
 
-    touch /mnt/.initialised
+    touch /srv/.initialised
     #########################################
     # Wait for Opal (this keeps container alive)
     #########################################
@@ -126,7 +126,7 @@ wait $OPAL_PID
 
 
 # If OPAL exits naturally, run shutdown anyway
-shutdown_handler
+#shutdown_handler
 #exec /usr/bin/bash /docker-entrypoint.sh app &
 #OPAL_PID=$!
 #wait $OPAL_PID
