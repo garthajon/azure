@@ -10,7 +10,7 @@
 # If it has then skip the customisation and exit
 # this stops the customisation being run every time the container is restarted
 # file check flag e checks whether the file exists at all, but does not check whether the file is a regular file or not
-if [ -e /mnt/.opal_initialised ]; then
+if [ -e /srv/.opal_initialised ]; then
   echo "Opal already initialised skipping customisation"
   exit 0
 fi
@@ -116,4 +116,4 @@ opal perm-table --user administrator --password password --type USER --project $
 touch /finished_local_customisation.txt
 
 # Create a file to indicate that opal has been initialised
-touch /mnt/.opal_initialised
+touch /srv/.opal_initialised
