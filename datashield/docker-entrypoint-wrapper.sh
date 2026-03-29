@@ -2,17 +2,21 @@
 cd /
 # grant read, write and execute permissions to the srv mounted directory
 chmod 777 /srv
+cd /srv
+rm -f tmlog*
 
 #trap shutdown_handler SIGTERM SIGINT
 
-#shutdown_handler() {
-#    echo "Shutdown signal received - final sync..."
-#    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
-#    kill "$OPAL_PID"
-#    wait "$OPAL_PID" || true
-#    fi
-#    rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-#}
+shutdown_handler() {
+    echo "Shutdown signal received - final sync..."
+    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
+    kill "$OPAL_PID"
+    wait "$OPAL_PID" || true
+    fi
+    #rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+    cd /srv
+    rm -f tmlog*
+}
 
 
 #  Proper PID 1 wrapper model
@@ -129,7 +133,7 @@ wait $OPAL_PID
 
 
 # If OPAL exits naturally, run shutdown anyway
-#shutdown_handler
+shutdown_handler
 #exec /usr/bin/bash /docker-entrypoint.sh app &
 #OPAL_PID=$!
 #wait $OPAL_PID
