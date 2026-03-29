@@ -108,7 +108,7 @@ if [ "$FIRST_RUN" = true ]; then
     # but don't use exec and keep wrapper alive
     /usr/bin/bash "/srv/customise.sh"
 
-    touch /srv/.initialised
+    #touch /srv/.initialised
     #########################################
     # Wait for Opal (this keeps container alive)
     #########################################
