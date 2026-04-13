@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
-cd /
+##cd /
 # grant read, write and execute permissions to the srv mounted directory
-chmod 777 /srv
-cd /srv
-rm -f tmlog*
+##chmod 777 /srv
+##cd /srv
+##rm -f tmlog*
 
 #trap shutdown_handler SIGTERM SIGINT
 
-shutdown_handler() {
-    echo "Shutdown signal received - final sync..."
-    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
-    kill "$OPAL_PID"
-    wait "$OPAL_PID" || true
-    fi
-    #rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
-    cd /srv
-    rm -f tmlog*
-}
+##shutdown_handler() {
+##    echo "Shutdown signal received - final sync..."
+##    if [ -n "$OPAL_PID" ] && kill -0 "$OPAL_PID" 2>/dev/null; then
+##    kill "$OPAL_PID"
+##    wait "$OPAL_PID" || true
+##    fi
+##    #rsync -a --delete --exclude 'tmlog*' /srv/ /mnt/opal/
+##    cd /srv
+##    rm -f tmlog*
+##}
 
 
 #  Proper PID 1 wrapper model
@@ -40,9 +40,9 @@ fi
 #########################################
 # Pre-start logic
 #########################################
-if [ "$FIRST_RUN" = true ]; then
-    echo "First run: cleaning mount"
-    rm -rf /srv/* /srv/opal/.[!.]* /srv/opal/..?* || true
+##if [ "$FIRST_RUN" = true ]; then
+##    echo "First run: cleaning mount"
+##    rm -rf /srv/* /srv/opal/.[!.]* /srv/opal/..?* || true
     # move to the root directory to avoid any potential issues with relative paths in the customise.sh script, as the script may expect to be run from the root directory of the container filesystem, and this also ensures that we are not in a subdirectory that could cause issues with file paths or permissions when running the customise.sh script, which is important for the correct execution of the configuration logic within that script
     #cd /
     # Ensure mount exists
@@ -51,7 +51,7 @@ if [ "$FIRST_RUN" = true ]; then
 #    echo "Restoring persisted data"
 #    rm -rf /srv/*
 #    rsync -a --exclude 'tmlog*' /mnt/opal/ /srv/
-fi
+##fi
 
 #########################################
 # Start Opal (ONLY ONCE)
@@ -133,7 +133,7 @@ wait $OPAL_PID
 
 
 # If OPAL exits naturally, run shutdown anyway
-shutdown_handler
+#shutdown_handler
 #exec /usr/bin/bash /docker-entrypoint.sh app &
 #OPAL_PID=$!
 #wait $OPAL_PID
