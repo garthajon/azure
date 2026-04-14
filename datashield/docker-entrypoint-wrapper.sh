@@ -113,7 +113,9 @@ if [ "$FIRST_RUN" = true ]; then
 
     # run customise in foreground
     # but don't use exec and keep wrapper alive
-    /usr/bin/bash "/srv/customise.sh"
+
+    #disable execution of customise sh to see if this is causing problems
+    #/usr/bin/bash "/srv/customise.sh"
 
     #touch /srv/.initialised
     #########################################
